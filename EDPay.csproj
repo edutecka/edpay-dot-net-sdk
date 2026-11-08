@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <PackageId>EDPay.SDK</PackageId>
+    <Version>0.1.0</Version>
+    <Authors>Edutecka Servicos Tecnologicos Lda</Authors>
+    <Company>Edutecka Servicos Tecnologicos Lda</Company>
+    <Description>SDK oficial da plataforma EDPay para .NET / C#</Description>
+  </PropertyGroup>
+</Project>
