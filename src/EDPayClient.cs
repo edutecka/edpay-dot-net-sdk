@@ -30,6 +30,8 @@ namespace EDPay.Sdk
 
         public PaymentsResource Payments { get; }
         public CheckoutResource Checkout { get; }
+        public InvoicesResource Invoices { get; }
+        public SubscriptionsResource Subscriptions { get; }
 
         public EDPayClient(EDPayOptions options, HttpClient? httpClient = null)
         {
@@ -45,6 +47,8 @@ namespace EDPay.Sdk
 
             Payments = new PaymentsResource(this);
             Checkout = new CheckoutResource(this);
+            Invoices = new InvoicesResource(this);
+            Subscriptions = new SubscriptionsResource(this);
         }
 
         public async Task<string> SendRequestAsync(HttpMethod method, string endpoint, string? jsonPayload = null, string? idempotencyKey = null)
