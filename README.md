@@ -15,8 +15,8 @@ No NuGet release is assumed. Build a local package from this repository:
 ```bash
 git clone https://github.com/edutecka/edpay-dot-net-sdk.git
 cd edpay-dot-net-sdk
-dotnet build
-dotnet pack -o ./artifacts
+dotnet build EDPay.Sdk.csproj
+dotnet pack EDPay.Sdk.csproj -o ./artifacts
 ```
 
 In the consuming application's directory, install that locally built package by pointing NuGet at the generated feed:
