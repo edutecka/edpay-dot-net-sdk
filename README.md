@@ -1,35 +1,31 @@
 # EDPay .NET SDK
 
-Official .NET client for server-to-server EDPay integrations. The project targets .NET 8, .NET 7, and .NET Standard 2.0 and exposes asynchronous payment, hosted-checkout, invoice, subscription, and webhook-verification components.
+EDPay .NET client for server-to-server payments and hosted checkout.
 
 ## Requirements
 
-- .NET SDK 8 or later to build the multi-targeted project
-- A consuming application compatible with one of the target frameworks
-- EDPay API keys for the environment you intend to use
+- .NET SDK 8 or later
+- EDPay API keys for your environment
 
-## Install from source
+## Install
 
-No NuGet release is assumed. Build a local package from this repository:
+Build a local NuGet package from the SDK repository:
 
 ```bash
 git clone https://github.com/edutecka/edpay-dot-net-sdk.git
 cd edpay-dot-net-sdk
-dotnet build EDPay.Sdk.csproj
 dotnet pack EDPay.Sdk.csproj -o ./artifacts
 ```
 
-In the consuming application's directory, install that locally built package by pointing NuGet at the generated feed:
+From your application's directory, install the package from the generated feed:
 
 ```bash
 dotnet add package EDPay.Sdk --source /path/to/edpay-dot-net-sdk/artifacts
 ```
 
-Alternatively, add `EDPay.Sdk.csproj` as a project reference in your solution. Rebuild the package after pulling SDK changes.
-
 ## Create a payment
 
-Store credentials in environment variables, user secrets, or a managed secret store. `Payments.CreateAsync` accepts a JSON request body and returns the API response as a JSON string; it does not map the response to SDK model classes.
+Keep both API keys in server-side configuration, such as environment variables or .NET user secrets. `Payments.CreateAsync` takes the API request body as JSON and returns the response as JSON text.
 
 ```csharp
 using System;
@@ -44,12 +40,14 @@ var client = new EDPayClient(new EDPayOptions
 {
     PublicKey = publicKey,
     PrivateKey = privateKey,
-    Environment = EDPayEnvironment.Sandbox
+    Environment = EDPayEnvironment.Sandbox,
+    BaseUrl = "https://api-pay.edutecka.com"
 });
 
 var payload = """
     {"amount_minor":50000,"currency":"MZN",
      "method":"method_from_payment_methods",
+     "phone":"+25884xxxxxxx",
      "reference":"ORDER-10492","description":"Example order"}
     """;
 
@@ -59,11 +57,11 @@ string responseJson = await client.Payments.CreateAsync(
 Console.WriteLine(responseJson);
 ```
 
-Replace `method_from_payment_methods` with the method identifier returned by `GET /v1/public/payment-methods`; the SDK does not hard-code a payment provider or expose that endpoint as a resource. The request body is sent as provided to `POST /v1/payments`. The client selects the sandbox API base URL when `EDPayEnvironment.Sandbox` is set and sends `X-EDPay-Public-Key`, `X-EDPay-Private-Key`, and the optional `Idempotency-Key` headers.
+Replace `method_from_payment_methods` with an ID returned by `GET /v1/public/payment-methods`. `amount_minor` uses minor currency units; `50000` means MZN 500.00. Include `phone` when required by the selected method. API keys determine the environment. `BaseUrl` sets the API host. The client sends `X-EDPay-Public-Key`, `X-EDPay-Private-Key`, and the optional `Idempotency-Key` headers.
 
 ## Hosted checkout and webhooks
 
-`client.Checkout` provides `CreateSessionAsync`, `RetrieveSessionAsync`, and `ExpireSessionAsync` for hosted checkout sessions. These methods also accept and return JSON strings. Redirect the customer to the URL returned by the API and confirm the payment server-side; do not treat a browser redirect as proof of payment.
+Create a hosted checkout session with `client.Checkout.CreateSessionAsync(jsonPayload, idempotencyKey)`. The checkout methods accept and return JSON text. Redirect the customer to the URL returned by the API and confirm the final payment server-side.
 
 Verify webhook signatures against the unmodified request body before processing an event:
 
@@ -77,7 +75,17 @@ if (!isValid)
 }
 ```
 
-The signature header value is supplied as received from `X-EDPay-Signature`. Keep the webhook secret in protected server-side configuration.
+Pass the received `X-EDPay-Signature` header value and the unmodified request body to the verifier. Keep the webhook secret in protected server-side configuration.
+
+## Available operations
+
+- Payments: `CreateAsync`, `RetrieveAsync`, `CancelAsync`
+- Checkout sessions: `CreateSessionAsync`, `RetrieveSessionAsync`, `ExpireSessionAsync`
+- Invoices: `CreateAsync`, `ListAsync`, `RetrieveAsync`, `FinalizeAsync`, `VoidAsync`
+- Subscriptions: `CreateAsync`, `ListAsync`, `RetrieveAsync`, `PauseAsync`, `ResumeAsync`, `CancelAsync`
+- Webhooks: `WebhookVerifier.Verify`
+
+Resource methods return JSON text. Deserialize it with `System.Text.Json` to access response fields such as payment ID, status, and checkout URL.
 
 ## API documentation
 
