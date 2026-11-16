@@ -23,6 +23,12 @@ namespace EDPay.Sdk.Resources
             return _client.SendRequestAsync(HttpMethod.Post, "/v1/payment-checkout", jsonPayload, idempotencyKey);
         }
 
+        /// <summary>Start a child method attempt on the same payment after the latest attempt definitively failed.</summary>
+        public Task<string> CreateAttemptAsync(string paymentId, string jsonPayload, string idempotencyKey)
+        {
+            return _client.SendRequestAsync(HttpMethod.Post, $"/v1/payments/{Uri.EscapeDataString(paymentId)}/attempts", jsonPayload, idempotencyKey);
+        }
+
         public Task<string> ListAsync(int limit = 50)
         {
             if (limit < 1 || limit > 100) throw new ArgumentOutOfRangeException(nameof(limit), "limit must be between 1 and 100");

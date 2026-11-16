@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.5.0
+
+- Add child payment-attempt methods for server payments and hosted checkout sessions/payment links. Attempts reuse the payment ID, amount, and reference.
+- Keep method attempts idempotent and document when a failed, processing, or unknown result allows a new attempt.
+
 ## 1.4.0
 
 - Added customers, payment links, wallets, FX quotes, webhooks, and public API resources.

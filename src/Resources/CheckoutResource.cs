@@ -43,6 +43,12 @@ namespace EDPay.Sdk.Resources
             return _client.SendPublicRequestAsync(HttpMethod.Get, $"/v1/checkout/sessions/{Uri.EscapeDataString(token)}/payments/{Uri.EscapeDataString(paymentId)}");
         }
 
+        /// <summary>Switch method for the same session payment after its latest attempt definitively failed.</summary>
+        public Task<string> CreateSessionPaymentAttemptAsync(string token, string paymentId, string jsonPayload, string idempotencyKey)
+        {
+            return _client.SendPublicRequestAsync(HttpMethod.Post, $"/v1/checkout/sessions/{Uri.EscapeDataString(token)}/payments/{Uri.EscapeDataString(paymentId)}/attempts", jsonPayload, idempotencyKey);
+        }
+
         public Task<string> CreatePaymentLinkPaymentAsync(string linkId, string jsonPayload, string idempotencyKey)
         {
             return _client.SendPublicRequestAsync(HttpMethod.Post, $"/v1/checkout/payment-links/{Uri.EscapeDataString(linkId)}/payments", jsonPayload, idempotencyKey);
@@ -51,6 +57,12 @@ namespace EDPay.Sdk.Resources
         public Task<string> RetrievePaymentLinkPaymentAsync(string linkId, string paymentId)
         {
             return _client.SendPublicRequestAsync(HttpMethod.Get, $"/v1/checkout/payment-links/{Uri.EscapeDataString(linkId)}/payments/{Uri.EscapeDataString(paymentId)}");
+        }
+
+        /// <summary>Switch method for the same payment-link payment after its latest attempt definitively failed.</summary>
+        public Task<string> CreatePaymentLinkPaymentAttemptAsync(string linkId, string paymentId, string jsonPayload, string idempotencyKey)
+        {
+            return _client.SendPublicRequestAsync(HttpMethod.Post, $"/v1/checkout/payment-links/{Uri.EscapeDataString(linkId)}/payments/{Uri.EscapeDataString(paymentId)}/attempts", jsonPayload, idempotencyKey);
         }
     }
 }
