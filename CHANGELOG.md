@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.5.1
+
+- Require a valid public/private API key pair from the same environment before creating the client.
+
 ## 1.5.0
 
 - Add child payment-attempt methods for server payments and hosted checkout sessions/payment links. Attempts reuse the payment ID, amount, and reference.

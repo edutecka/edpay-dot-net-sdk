@@ -25,6 +25,8 @@ dotnet add package EDPay.Sdk --source /path/to/edpay-dot-net-sdk/artifacts
 
 ## Create a payment
 
+Every partner API request requires both `EDPAY_PUBLIC_KEY` (`pk_test_` or `pk_live_`) and `EDPAY_PRIVATE_KEY` (`sk_test_` or `sk_live_`) from the same environment. The SDK rejects missing, blank, or mismatched key pairs when creating the client. Public catalog requests and buyer-facing checkout requests authenticated by a checkout token do not use the partner key pair; never put the private key in browser code.
+
 Keep both API keys in server-side configuration, such as environment variables or .NET user secrets. `Payments.CreateAsync` takes the API request body as JSON and returns the response as JSON text.
 
 ```csharp

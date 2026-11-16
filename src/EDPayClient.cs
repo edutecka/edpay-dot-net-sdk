@@ -43,6 +43,16 @@ namespace EDPay.Sdk
         public EDPayClient(EDPayOptions options, HttpClient? httpClient = null)
         {
             _options = options ?? throw new ArgumentNullException(nameof(options));
+            var publicKey = options.PublicKey?.Trim();
+            var privateKey = options.PrivateKey?.Trim();
+            var publicMode = System.Text.RegularExpressions.Regex.Match(publicKey ?? string.Empty, @"^pk_(test|live)_[0-9a-fA-F]{24}$").Groups[1].Value;
+            var privateMode = System.Text.RegularExpressions.Regex.Match(privateKey ?? string.Empty, @"^sk_(test|live)_[0-9a-fA-F]{64}$").Groups[1].Value;
+            if (string.IsNullOrEmpty(publicMode) || string.IsNullOrEmpty(privateMode))
+                throw new ArgumentException("A valid pk_test_/pk_live_ PublicKey (24 hex characters) and sk_test_/sk_live_ PrivateKey (64 hex characters) are required.", nameof(options));
+            if (publicMode != privateMode)
+                throw new ArgumentException("EDPay PublicKey and PrivateKey must use the same environment (test or live).", nameof(options));
+            options.PublicKey = publicKey;
+            options.PrivateKey = privateKey;
             _httpClient = httpClient ?? new HttpClient();
             _httpClient.Timeout = options.Timeout;
 
@@ -83,7 +93,7 @@ namespace EDPay.Sdk
                 request.Headers.Add("X-EDPay-Private-Key", _options.PrivateKey);
             }
             request.Headers.Add("Accept", "application/json");
-            request.Headers.Add("User-Agent", "EDPay-DotNet-SDK/1.5.0");
+            request.Headers.Add("User-Agent", "EDPay-DotNet-SDK/1.5.1");
 
             if (!string.IsNullOrWhiteSpace(idempotencyKey))
             {
