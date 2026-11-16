@@ -30,6 +30,7 @@ Keep both API keys in server-side configuration, such as environment variables o
 ```csharp
 using System;
 using EDPay.Sdk;
+using EDPay.Sdk.Contacts;
 
 var publicKey = Environment.GetEnvironmentVariable("EDPAY_PUBLIC_KEY")
     ?? throw new InvalidOperationException("Set EDPAY_PUBLIC_KEY.");
@@ -44,30 +45,42 @@ var client = new EDPayClient(new EDPayOptions
     BaseUrl = "https://api-pay.edutecka.com"
 });
 
-var payload = """
-    {"amount_minor":50000,"currency":"MZN",
-     "method":"method_from_payment_methods",
-     "phone":"+25884xxxxxxx",
+var method = Environment.GetEnvironmentVariable("EDPAY_METHOD")
+    ?? throw new InvalidOperationException("Set EDPAY_METHOD from GET /v1/public/payment-methods.");
+var phoneMember = "";
+if (PhoneNumber.RequiresPhoneForPaymentMethod(method))
+{
+    var phoneInput = Environment.GetEnvironmentVariable("CUSTOMER_PHONE")
+        ?? throw new InvalidOperationException("Set CUSTOMER_PHONE for this method.");
+    if (!PhoneNumber.IsValidForPaymentMethod(method, phoneInput))
+        throw new InvalidOperationException("Phone is invalid for the selected method.");
+    var phone = PhoneNumber.NormalizeForPaymentMethod(method, phoneInput);
+    phoneMember = $",\"phone\":\"{phone}\"";
+}
+var payload = $$"""
+    {"amount_minor":50000,"currency":"MZN","method":"{{method}}"{{phoneMember}},
      "reference":"ORDER-10492","description":"Example order"}
     """;
 
 string responseJson = await client.Payments.CreateAsync(
     payload,
-    idempotencyKey: "ORDER-10492");
+    idempotencyKey: "ORDER-10492-CREATE-1");
 Console.WriteLine(responseJson);
 ```
 
-Replace `method_from_payment_methods` with an ID returned by `GET /v1/public/payment-methods`. `amount_minor` uses minor currency units; `50000` means MZN 500.00. Include `phone` when required by the selected method. API keys determine the environment. `BaseUrl` sets the API host. The client sends `X-EDPay-Public-Key`, `X-EDPay-Private-Key`, and the optional `Idempotency-Key` headers.
+`amount_minor` is a positive integer in minor currency units (`50000` means MZN 500.00); `currency` must be `MZN`, `USD`, or `EUR` and match the account base currency. Select a live `method` ID from the public catalog. Set `CUSTOMER_PHONE` to the buyer's input in your own environment; the method-aware helpers validate and normalize eMola (`86`/`87` → 9 national digits, sent nationally) and M-Pesa (`84`/`85` → `258` + 9 national digits). For card and digital-wallet methods, `RequiresPhoneForPaymentMethod` is false and tokens go in `channel`; non-phone/custom values are not parsed as phone numbers. The API `channel` object supports `type`, `provider`, `customer_phone`, `customer_email`, `payment_token`, `wallet_token`, `return_url`, and `holder_name` as applicable. Optional payment fields also include `customer_id`, `reference`, and `description`. API key prefixes select the environment; sandbox and production use the same API host. Partner API routes send key headers; the public catalog and token-based checkout omit them. Writes include an `Idempotency-Key` where the endpoint requires one.
 
 ## Hosted checkout and webhooks
 
-Create a hosted checkout session with `client.Checkout.CreateSessionAsync(jsonPayload, idempotencyKey)`. The checkout methods accept and return JSON text. Redirect the customer to the URL returned by the API and confirm the final payment server-side.
+Create a payment link and persist a `payment_link_id` → local order mapping before redirecting the customer. Then create a hosted checkout session with `client.PaymentLinks.CreateCheckoutSessionAsync(jsonPayload, idempotencyKey)`. The session payload contains `payment_link_id`; the response returns a short-lived token for browser checkout. On webhook receipt, use `data.payment_link_id` to recover the order mapping; the field is nullable for payments that did not come from a payment link. Checkout resource methods also read frame policy and create or retrieve session and payment-link payments. Confirm the final payment server-side.
 
-Verify webhook signatures against the unmodified request body before processing an event:
+Verify webhook signatures against the exact raw request body bytes before processing an event:
 
 ```csharp
 using EDPay.Sdk.Webhooks;
 
+byte[] rawRequestBody = await ReadRequestBodyBytesAsync();
+string signatureHeader = GetRequestHeader("Payment-Signature");
 bool isValid = WebhookVerifier.Verify(rawRequestBody, signatureHeader, webhookSecret);
 if (!isValid)
 {
@@ -75,17 +88,30 @@ if (!isValid)
 }
 ```
 
-Pass the received `X-EDPay-Signature` header value and the unmodified request body to the verifier. Keep the webhook secret in protected server-side configuration.
+The header format is `Payment-Signature: t=<unix-seconds>,v1=<hex>`. The verifier computes HMAC-SHA256 over the timestamp, a period, and the unmodified body bytes, compares in constant time, and rejects timestamps outside the default five-minute tolerance. Pass a custom `TimeSpan` tolerance when needed. The `string` overload UTF-8 encodes the payload; use `byte[]` to preserve the exact HTTP body. Keep the full webhook secret returned at endpoint creation in protected server-side configuration.
+
+Webhook payment data includes a nullable link reference:
+
+```json
+{"id":"evt_0123456789abcdef","object":"event","type":"payment.succeeded","created_at":"2026-11-07T12:05:00Z","data":{"object":"payment","id":"pay_0123456789abcdef","reference":"ORDER-10492","payment_link_id":"plink_0123456789abcdef","trans_id":null,"method":"mpesa","status":"succeeded","amount_minor":50000,"currency":"MZN","platform_fee_minor":3000,"receiver_net_minor":47000,"created_at":"2026-11-07T12:04:00Z"}}
+```
+
+Deserialize this shape with `WebhookEvent` / `WebhookPaymentData`; `PaymentLinkId` is nullable. Persist the link-ID-to-order mapping before redirecting the customer and use this field to recover the order. Handle `null` for other payment paths.
 
 ## Available operations
 
-- Payments: `CreateAsync`, `RetrieveAsync`, `CancelAsync`
-- Checkout sessions: `CreateSessionAsync`, `RetrieveSessionAsync`, `ExpireSessionAsync`
-- Invoices: `CreateAsync`, `ListAsync`, `RetrieveAsync`, `FinalizeAsync`, `VoidAsync`
-- Subscriptions: `CreateAsync`, `ListAsync`, `RetrieveAsync`, `PauseAsync`, `ResumeAsync`, `CancelAsync`
-- Webhooks: `WebhookVerifier.Verify`
+- Payments: create (`/v1/payments` and `/v1/payment-checkout`), list (limit 1–100), retrieve, events and attempts.
+- Checkout: create session; retrieve session/payment link; frame policy; create/retrieve session and payment-link payments.
+- Customers: create, list (up to 100), retrieve and update. Payment links: create, list (up to 100), retrieve and deactivate.
+- Invoices: create, list (default or explicit limit 1–100), retrieve, finalize and void. Invoice series: create, list (default or explicit limit 1–100), pause and resume; no series-detail route exists.
+- FX quote; wallets (list, retrieve, balance, cursor-paginated entries, limit 1–100); public payment methods; webhooks (endpoint list/create/update/disable/delete and delivery list/retrieve/retry, limit 1–100).
+- Public support chat: post optional `session_id` and `messages[]` (`role`, `content`) JSON and receive the server-sent event stream as text (default timeout: 60 seconds; API stream can run for up to 45 seconds).
+- Contacts: generic `Normalize`, `Format`, `AddCountryPrefix`, `RemoveCountryPrefix`, `IsValid`; method-aware `RulesForPaymentMethod`, `NormalizeForPaymentMethod`, `FormatForPaymentMethod`, `IsValidForPaymentMethod`, and `RequiresPhoneForPaymentMethod`.
+- Webhook signature verification: `WebhookVerifier.Verify`
 
-Resource methods return JSON text. Deserialize it with `System.Text.Json` to access response fields such as payment ID, status, and checkout URL.
+`EDPayException` exposes the HTTP status and response body, plus `RequestId` (`X-Request-Id`) and `RetryAfter` (`Retry-After`, when present). Honor the retry delay on HTTP 429.
+
+Resource methods return JSON text. Request schemas use `amount_minor`, `currency`, `method`, conditional `phone`, optional `customer_id`, `reference`, `description`, and `channel` for payments; invoice `items[]` have `description`, integer `quantity`, and `unit_amount_minor`; invoice series add `interval_unit`, `interval_count`, `starts_at`, `due_days`, and optional `ends_at`; payment links use `amount_minor`, `currency`, optional `expires_at`; customers use `name` and optional `email`; webhook endpoints use `url` and `events[]`; checkout sessions use `payment_link_id`. Partner API errors use `{error:{type,code,message,details},meta:{request_id}}`. Deserialize responses with `System.Text.Json`; `EDPayException` includes status, body, request ID, and retry-after metadata.
 
 ## API documentation
 

@@ -1,3 +1,4 @@
+using System;
 using System.Net.Http;
 using System.Threading.Tasks;
 
@@ -12,35 +13,30 @@ namespace EDPay.Sdk.Resources
             _client = client;
         }
 
-        public Task<string> CreateAsync(string jsonPayload, string? idempotencyKey = null)
+        public Task<string> CreateAsync(string jsonPayload, string idempotencyKey)
         {
             return _client.SendRequestAsync(HttpMethod.Post, "/v1/invoice-series", jsonPayload, idempotencyKey);
         }
 
-        public Task<string> ListAsync(string? queryParams = null)
+        public Task<string> ListAsync()
         {
-            var path = "/v1/invoice-series" + (!string.IsNullOrWhiteSpace(queryParams) ? $"?{queryParams}" : "");
-            return _client.SendRequestAsync(HttpMethod.Get, path);
+            return _client.SendRequestAsync(HttpMethod.Get, "/v1/invoice-series");
         }
 
-        public Task<string> RetrieveAsync(string seriesId)
+        public Task<string> ListAsync(int limit)
         {
-            return _client.SendRequestAsync(HttpMethod.Get, $"/v1/invoice-series/{seriesId}");
+            if (limit < 1 || limit > 100) throw new ArgumentOutOfRangeException(nameof(limit), "limit must be between 1 and 100");
+            return _client.SendRequestAsync(HttpMethod.Get, $"/v1/invoice-series?limit={limit}");
         }
 
         public Task<string> PauseAsync(string seriesId)
         {
-            return _client.SendRequestAsync(HttpMethod.Post, $"/v1/invoice-series/{seriesId}/pause", "{}");
+            return _client.SendRequestAsync(HttpMethod.Post, $"/v1/invoice-series/{Uri.EscapeDataString(seriesId)}/pause", "{}");
         }
 
         public Task<string> ResumeAsync(string seriesId)
         {
-            return _client.SendRequestAsync(HttpMethod.Post, $"/v1/invoice-series/{seriesId}/resume", "{}");
-        }
-
-        public Task<string> CancelAsync(string seriesId)
-        {
-            return _client.SendRequestAsync(HttpMethod.Post, $"/v1/invoice-series/{seriesId}/cancel", "{}");
+            return _client.SendRequestAsync(HttpMethod.Post, $"/v1/invoice-series/{Uri.EscapeDataString(seriesId)}/resume", "{}");
         }
     }
 }

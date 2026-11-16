@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
@@ -19,7 +20,7 @@ namespace EDPay.Sdk
         public required string PrivateKey { get; set; }
         public EDPayEnvironment Environment { get; set; } = EDPayEnvironment.Production;
         public string? BaseUrl { get; set; }
-        public TimeSpan Timeout { get; set; } = TimeSpan.FromSeconds(30);
+        public TimeSpan Timeout { get; set; } = TimeSpan.FromSeconds(60);
     }
 
     public class EDPayClient
@@ -32,6 +33,12 @@ namespace EDPay.Sdk
         public CheckoutResource Checkout { get; }
         public InvoicesResource Invoices { get; }
         public SubscriptionsResource Subscriptions { get; }
+        public CustomersResource Customers { get; }
+        public PaymentLinksResource PaymentLinks { get; }
+        public WalletsResource Wallets { get; }
+        public FxResource Fx { get; }
+        public WebhooksResource Webhooks { get; }
+        public PublicResource Public { get; }
 
         public EDPayClient(EDPayOptions options, HttpClient? httpClient = null)
         {
@@ -42,22 +49,41 @@ namespace EDPay.Sdk
             _baseUrl = !string.IsNullOrWhiteSpace(options.BaseUrl)
                 ? options.BaseUrl.TrimEnd('/')
                 : (options.Environment == EDPayEnvironment.Sandbox
-                    ? "https://sandbox-api.edpay.co.mz"
-                    : "https://api.edpay.co.mz");
+                    ? "https://api-pay.edutecka.com"
+                    : "https://api-pay.edutecka.com");
 
             Payments = new PaymentsResource(this);
             Checkout = new CheckoutResource(this);
             Invoices = new InvoicesResource(this);
             Subscriptions = new SubscriptionsResource(this);
+            Customers = new CustomersResource(this);
+            PaymentLinks = new PaymentLinksResource(this);
+            Wallets = new WalletsResource(this);
+            Fx = new FxResource(this);
+            Webhooks = new WebhooksResource(this);
+            Public = new PublicResource(this);
         }
 
         public async Task<string> SendRequestAsync(HttpMethod method, string endpoint, string? jsonPayload = null, string? idempotencyKey = null)
         {
+            return await SendRequestCoreAsync(method, endpoint, jsonPayload, idempotencyKey, true);
+        }
+
+        public async Task<string> SendPublicRequestAsync(HttpMethod method, string endpoint, string? jsonPayload = null, string? idempotencyKey = null)
+        {
+            return await SendRequestCoreAsync(method, endpoint, jsonPayload, idempotencyKey, false);
+        }
+
+        private async Task<string> SendRequestCoreAsync(HttpMethod method, string endpoint, string? jsonPayload, string? idempotencyKey, bool authenticated)
+        {
             using var request = new HttpRequestMessage(method, $"{_baseUrl}{endpoint}");
-            request.Headers.Add("X-EDPay-Public-Key", _options.PublicKey);
-            request.Headers.Add("X-EDPay-Private-Key", _options.PrivateKey);
+            if (authenticated)
+            {
+                request.Headers.Add("X-EDPay-Public-Key", _options.PublicKey);
+                request.Headers.Add("X-EDPay-Private-Key", _options.PrivateKey);
+            }
             request.Headers.Add("Accept", "application/json");
-            request.Headers.Add("User-Agent", "EDPay-DotNet-SDK/1.0.0");
+            request.Headers.Add("User-Agent", "EDPay-DotNet-SDK/1.4.0");
 
             if (!string.IsNullOrWhiteSpace(idempotencyKey))
             {
@@ -74,7 +100,14 @@ namespace EDPay.Sdk
 
             if (!response.IsSuccessStatusCode)
             {
-                throw new EDPayException($"EDPay API error: {(int)response.StatusCode}", (int)response.StatusCode, content);
+                response.Headers.TryGetValues("X-Request-Id", out var requestIds);
+                response.Headers.TryGetValues("Retry-After", out var retryAfterValues);
+                throw new EDPayException(
+                    $"EDPay API error: {(int)response.StatusCode}",
+                    (int)response.StatusCode,
+                    content,
+                    requestIds?.FirstOrDefault(),
+                    retryAfterValues?.FirstOrDefault());
             }
 
             return content;

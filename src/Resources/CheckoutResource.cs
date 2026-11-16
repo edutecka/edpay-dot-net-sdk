@@ -1,3 +1,4 @@
+using System;
 using System.Net.Http;
 using System.Threading.Tasks;
 
@@ -12,19 +13,44 @@ namespace EDPay.Sdk.Resources
             _client = client;
         }
 
-        public Task<string> CreateSessionAsync(string jsonPayload, string? idempotencyKey = null)
+        public Task<string> CreateSessionAsync(string jsonPayload, string idempotencyKey)
         {
             return _client.SendRequestAsync(HttpMethod.Post, "/v1/checkout/sessions", jsonPayload, idempotencyKey);
         }
 
-        public Task<string> RetrieveSessionAsync(string sessionId)
+        public Task<string> RetrieveSessionAsync(string token)
         {
-            return _client.SendRequestAsync(HttpMethod.Get, $"/v1/checkout/sessions/{sessionId}");
+            return _client.SendPublicRequestAsync(HttpMethod.Get, $"/v1/checkout/sessions/{Uri.EscapeDataString(token)}");
         }
 
-        public Task<string> ExpireSessionAsync(string sessionId)
+        public Task<string> GetPaymentLinkAsync(string linkId)
         {
-            return _client.SendRequestAsync(HttpMethod.Post, $"/v1/checkout/sessions/{sessionId}/expire", "{}");
+            return _client.SendPublicRequestAsync(HttpMethod.Get, $"/v1/checkout/payment-links/{Uri.EscapeDataString(linkId)}");
+        }
+
+        public Task<string> FramePolicyAsync(string token)
+        {
+            return _client.SendPublicRequestAsync(HttpMethod.Get, $"/v1/checkout/sessions/{Uri.EscapeDataString(token)}/frame-policy");
+        }
+
+        public Task<string> CreateSessionPaymentAsync(string token, string jsonPayload, string idempotencyKey)
+        {
+            return _client.SendPublicRequestAsync(HttpMethod.Post, $"/v1/checkout/sessions/{Uri.EscapeDataString(token)}/payments", jsonPayload, idempotencyKey);
+        }
+
+        public Task<string> RetrieveSessionPaymentAsync(string token, string paymentId)
+        {
+            return _client.SendPublicRequestAsync(HttpMethod.Get, $"/v1/checkout/sessions/{Uri.EscapeDataString(token)}/payments/{Uri.EscapeDataString(paymentId)}");
+        }
+
+        public Task<string> CreatePaymentLinkPaymentAsync(string linkId, string jsonPayload, string idempotencyKey)
+        {
+            return _client.SendPublicRequestAsync(HttpMethod.Post, $"/v1/checkout/payment-links/{Uri.EscapeDataString(linkId)}/payments", jsonPayload, idempotencyKey);
+        }
+
+        public Task<string> RetrievePaymentLinkPaymentAsync(string linkId, string paymentId)
+        {
+            return _client.SendPublicRequestAsync(HttpMethod.Get, $"/v1/checkout/payment-links/{Uri.EscapeDataString(linkId)}/payments/{Uri.EscapeDataString(paymentId)}");
         }
     }
 }
