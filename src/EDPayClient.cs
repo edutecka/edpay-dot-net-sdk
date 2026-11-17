@@ -13,7 +13,7 @@ namespace EDPay.Sdk
         public required string PublicKey { get; set; }
         public required string PrivateKey { get; set; }
         public string? BaseUrl { get; set; }
-        public TimeSpan Timeout { get; set; } = TimeSpan.FromSeconds(60);
+        public TimeSpan Timeout { get; set; } = TimeSpan.FromSeconds(90);
     }
 
     public class EDPayClient

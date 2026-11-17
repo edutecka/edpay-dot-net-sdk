@@ -4,6 +4,7 @@
 
 - Remove the SDK environment selector; matching API key prefixes determine test or live access.
 - Keep API requests on the single EDPay API host and update NuGet metadata to 1.6.1.
+- Wait up to 80 seconds from the API request for M-Pesa/e-Mola private checkout. The provider's separate 60-second PIN window starts after Master dispatch, and dispatch latency consumes the API deadline; SDK transport defaults to 90 seconds.
 
 ## 1.6.0
 
