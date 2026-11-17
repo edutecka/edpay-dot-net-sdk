@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.6.1
+
+- Remove the SDK environment selector; matching API key prefixes determine test or live access.
+- Keep API requests on the single EDPay API host and update NuGet metadata to 1.6.1.
+
 ## 1.6.0
 
 - Add the unified payment parent and child checkout operations for private API, hosted checkout, and link checkout.

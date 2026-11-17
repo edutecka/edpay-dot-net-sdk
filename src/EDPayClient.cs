@@ -8,17 +8,10 @@ using EDPay.Sdk.Resources;
 
 namespace EDPay.Sdk
 {
-    public enum EDPayEnvironment
-    {
-        Production,
-        Sandbox
-    }
-
     public class EDPayOptions
     {
         public required string PublicKey { get; set; }
         public required string PrivateKey { get; set; }
-        public EDPayEnvironment Environment { get; set; } = EDPayEnvironment.Production;
         public string? BaseUrl { get; set; }
         public TimeSpan Timeout { get; set; } = TimeSpan.FromSeconds(60);
     }
@@ -56,9 +49,7 @@ namespace EDPay.Sdk
 
             _baseUrl = !string.IsNullOrWhiteSpace(options.BaseUrl)
                 ? options.BaseUrl.TrimEnd('/')
-                : (options.Environment == EDPayEnvironment.Sandbox
-                    ? "https://api-pay.edutecka.com"
-                    : "https://api-pay.edutecka.com");
+                : "https://api-pay.edutecka.com";
 
             Payments = new PaymentsResource(this);
             Invoices = new InvoicesResource(this);
@@ -89,7 +80,7 @@ namespace EDPay.Sdk
                 request.Headers.Add("X-EDPay-Private-Key", _options.PrivateKey);
             }
             request.Headers.Add("Accept", "application/json");
-            request.Headers.Add("User-Agent", "EDPay-DotNet-SDK/1.6.0");
+            request.Headers.Add("User-Agent", "EDPay-DotNet-SDK/1.6.1");
 
             if (!string.IsNullOrWhiteSpace(idempotencyKey))
             {

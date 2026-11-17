@@ -43,8 +43,6 @@ var client = new EDPayClient(new EDPayOptions
 {
     PublicKey = publicKey,
     PrivateKey = privateKey,
-    Environment = EDPayEnvironment.Sandbox,
-    BaseUrl = "https://api-pay.edutecka.com"
 });
 
 var payload = """
