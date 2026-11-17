@@ -15,28 +15,28 @@ namespace EDPay.Sdk.Resources
 
         public Task<string> CreateAsync(string jsonPayload, string idempotencyKey)
         {
-            return _client.SendRequestAsync(HttpMethod.Post, "/v1/invoice-series", jsonPayload, idempotencyKey);
+            return _client.SendRequestAsync(HttpMethod.Post, "/v1/invoices/series", jsonPayload, idempotencyKey);
         }
 
         public Task<string> ListAsync()
         {
-            return _client.SendRequestAsync(HttpMethod.Get, "/v1/invoice-series");
+            return _client.SendRequestAsync(HttpMethod.Get, "/v1/invoices/series");
         }
 
         public Task<string> ListAsync(int limit)
         {
             if (limit < 1 || limit > 100) throw new ArgumentOutOfRangeException(nameof(limit), "limit must be between 1 and 100");
-            return _client.SendRequestAsync(HttpMethod.Get, $"/v1/invoice-series?limit={limit}");
+            return _client.SendRequestAsync(HttpMethod.Get, $"/v1/invoices/series?limit={limit}");
         }
 
         public Task<string> PauseAsync(string seriesId)
         {
-            return _client.SendRequestAsync(HttpMethod.Post, $"/v1/invoice-series/{Uri.EscapeDataString(seriesId)}/pause", "{}");
+            return _client.SendRequestAsync(HttpMethod.Post, $"/v1/invoices/series/{Uri.EscapeDataString(seriesId)}/pause", "{}");
         }
 
         public Task<string> ResumeAsync(string seriesId)
         {
-            return _client.SendRequestAsync(HttpMethod.Post, $"/v1/invoice-series/{Uri.EscapeDataString(seriesId)}/resume", "{}");
+            return _client.SendRequestAsync(HttpMethod.Post, $"/v1/invoices/series/{Uri.EscapeDataString(seriesId)}/resume", "{}");
         }
     }
 }

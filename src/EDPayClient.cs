@@ -30,11 +30,9 @@ namespace EDPay.Sdk
         private readonly string _baseUrl;
 
         public PaymentsResource Payments { get; }
-        public CheckoutResource Checkout { get; }
         public InvoicesResource Invoices { get; }
         public SubscriptionsResource Subscriptions { get; }
         public CustomersResource Customers { get; }
-        public PaymentLinksResource PaymentLinks { get; }
         public WalletsResource Wallets { get; }
         public FxResource Fx { get; }
         public WebhooksResource Webhooks { get; }
@@ -63,11 +61,9 @@ namespace EDPay.Sdk
                     : "https://api-pay.edutecka.com");
 
             Payments = new PaymentsResource(this);
-            Checkout = new CheckoutResource(this);
             Invoices = new InvoicesResource(this);
             Subscriptions = new SubscriptionsResource(this);
             Customers = new CustomersResource(this);
-            PaymentLinks = new PaymentLinksResource(this);
             Wallets = new WalletsResource(this);
             Fx = new FxResource(this);
             Webhooks = new WebhooksResource(this);

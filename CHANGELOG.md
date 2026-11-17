@@ -1,13 +1,13 @@
 # Changelog
 
-## 1.5.1
+## 1.5.1 · pre-release updates
 
-- Require a valid public/private API key pair from the same environment before creating the client.
+- Add the unified payment parent and child checkout operations for private API, hosted checkout, and link checkout.
+- Add opaque-token buyer routes and checkout history on the parent payment.
 
 ## 1.5.0
 
-- Add child payment-attempt methods for server payments and hosted checkout sessions/payment links. Attempts reuse the payment ID, amount, and reference.
-- Keep method attempts idempotent and document when a failed, processing, or unknown result allows a new attempt.
+- Improve payment method handling and idempotent payment requests.
 
 ## 1.4.0
 
