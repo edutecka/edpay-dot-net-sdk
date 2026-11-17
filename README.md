@@ -76,6 +76,10 @@ string checkoutJson = await client.Payments.PublicCheckoutAsync(paymentId, "{}",
 
 `PrivateCheckoutAsync` submits a method from your backend. `PublicCheckoutAsync` returns an opaque token for hosted checkout. `LinkCheckoutAsync` returns a shareable token for this same payment. `ListCheckoutsAsync(paymentId)` lists private executions, public/link executions, and sessions where no method was submitted; each execution keeps its originating checkout mode. `RetrieveAsync(paymentId)` fetches status from the API; use verified webhooks for asynchronous updates.
 
+### M-Pesa and e-Mola PIN confirmation
+
+For `mpesa` and `emola` calls to `PrivateCheckoutAsync`, set a 60-second confirmation window and ask the buyer to approve the phone prompt and enter the PIN. The API returns `202 Accepted` when the execution is queued; it does not wait for PIN entry or confirm payment. Keep the payment pending and wait for a verified webhook or poll `RetrieveAsync(paymentId)` / `ListCheckoutsAsync(paymentId)` for the final status. If no confirmation arrives within 60 seconds, continue reconciliation; do not resubmit while the execution is pending or unknown.
+
 ## Function reference
 
 Each row tells you what the call does and when to use it. Partner calls use the API key pair; public catalog and buyer checkout calls do not. Supply a stable `Idempotency-Key` for writes where required.
