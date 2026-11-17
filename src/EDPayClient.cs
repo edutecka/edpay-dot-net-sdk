@@ -10,8 +10,8 @@ namespace EDPay.Sdk
 {
     public class EDPayOptions
     {
-        public required string PublicKey { get; set; }
-        public required string PrivateKey { get; set; }
+        public string PublicKey { get; set; } = string.Empty;
+        public string PrivateKey { get; set; } = string.Empty;
         public string? BaseUrl { get; set; }
         public TimeSpan Timeout { get; set; } = TimeSpan.FromSeconds(90);
     }
