@@ -9,18 +9,10 @@ EDPay .NET client for server-to-server payments and hosted checkout.
 
 ## Install
 
-Build a local NuGet package from the SDK repository:
+Install the SDK from NuGet in your application's directory:
 
 ```bash
-git clone https://github.com/edutecka/edpay-dot-net-sdk.git
-cd edpay-dot-net-sdk
-dotnet pack EDPay.Sdk.csproj -o ./artifacts
-```
-
-From your application's directory, install the package from the generated feed:
-
-```bash
-dotnet add package EDPay.Sdk --source /path/to/edpay-dot-net-sdk/artifacts
+dotnet add package EDPay.Sdk --version 1.6.2
 ```
 
 ## Create a payment
