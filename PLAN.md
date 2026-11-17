@@ -16,7 +16,7 @@
 - [x] `WebhookVerifier` for timestamped `Payment-Signature` HMAC-SHA256 headers, constant-time comparison, and a configurable replay window.
 
 ### Phase 2: API Resource Coverage (Completed in 1.4.0)
-- [x] Payments, checkout sessions, customers, payment links, invoices, and invoice series.
+- [x] Payment records with private, hosted, and link checkout operations; customers, invoices, and invoice series.
 - [x] FX quotes, wallets and cursor-paginated ledger entries, public payment methods, and webhooks.
 - [x] Method coverage follows mounted routes; the API has no payment-cancel, session-expire, or invoice-series-detail route.
 - [x] Method-aware contacts, public endpoint calls, API error metadata, and timestamped webhook verification.
