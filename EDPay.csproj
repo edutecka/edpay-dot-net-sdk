@@ -4,7 +4,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <PackageId>EDPay.SDK</PackageId>
-    <Version>1.5.1</Version>
+    <Version>1.6.0</Version>
     <Authors>Edutecka Servicos Tecnologicos Lda</Authors>
     <Company>Edutecka Servicos Tecnologicos Lda</Company>
     <Description>Official EDPay platform SDK for .NET / C#</Description>
