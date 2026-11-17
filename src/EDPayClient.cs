@@ -80,7 +80,7 @@ namespace EDPay.Sdk
                 request.Headers.Add("X-EDPay-Private-Key", _options.PrivateKey);
             }
             request.Headers.Add("Accept", "application/json");
-            request.Headers.Add("User-Agent", "EDPay-DotNet-SDK/1.6.1");
+            request.Headers.Add("User-Agent", "EDPay-DotNet-SDK/1.6.2");
 
             if (!string.IsNullOrWhiteSpace(idempotencyKey))
             {
